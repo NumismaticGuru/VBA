@@ -1,0 +1,119 @@
+Sub CurrentInventory()
+
+Dim lw As Long
+
+Dim StartTime As Double
+Dim SecondsElapsed As Double
+
+  StartTime = Timer
+    Range("A1:AS6").UnMerge
+    delete_totals
+    delete_bolds
+    delete_columns
+    Range("K9").EntireColumn.Insert
+    Range("S9").EntireColumn.Insert
+    Range("K8").Value = "Available"
+    Range("S8").Value = "Available"
+    
+    lw = Range("A" & Rows.Count).End(xlUp).Row
+    
+    For x = 9 To lw
+        On Error Resume Next
+
+        Cells(x, 11) = "=-RC[-6]+RC[-5]+RC[-4]-RC[-3]-RC[-1]"
+        Cells(x, 19) = "=-RC[-6]+RC[-5]+RC[-4]-RC[-3]-RC[-1]"
+
+    Next x
+    
+    'delete_NotAvailable
+    autofilters
+    lw = Range("A" & Rows.Count).End(xlUp).Row
+    Application.DisplayAlerts = False
+    Range("A1").Value = "PUPCO Current Inventory Snapshot"
+    Range("A2:A3").Clear
+    Range("A1:S6").Merge
+    Range("A1:S6").VerticalAlignment = xlCenter
+    Range("A9").Select
+    Application.DisplayAlerts = True
+    
+    Range("T1:Bi" & lw).Interior.Color = vbWhite
+
+
+    SecondsElapsed = Round(Timer - StartTime, 2)
+
+    MsgBox "This code ran successfully in " & SecondsElapsed & " seconds", vbInformation
+
+'MsgBox "Complete", vbInformation
+End Sub
+
+Private Sub delete_totals()
+lastrow = Cells(Rows.Count, 1).End(xlUp).Row
+
+For x = 10 To lastrow
+On Error Resume Next
+    If Cells(x, 6) <> "" Then
+        Rows(x).EntireRow.Delete
+        x = x - 1
+    End If
+Next x
+End Sub
+
+Private Sub delete_bolds()
+x = 10
+Do While Cells(x, 1) <> ""
+    If Cells(x, 42) = "" Then
+        Rows(x).EntireRow.Delete
+        x = x - 1
+    End If
+x = x + 1
+Loop
+End Sub
+
+Private Sub delete_columns()
+For x = 1 To 21
+    Columns(4).EntireColumn.Delete
+Next x
+For x = 1 To 7
+    Columns(18).EntireColumn.Delete
+Next x
+End Sub
+Private Sub delete_NotAvailable()
+x = 9
+Do While Cells(x, 1) <> ""
+On Error Resume Next
+    If Cells(x, 11) < 1 And Cells(x, 19) < 1 Then
+        Rows(x).EntireRow.Delete
+        x = x - 1
+    End If
+x = x + 1
+Loop
+End Sub
+Private Sub CalculateRunTime_Seconds()
+Dim StartTime As Double
+Dim SecondsElapsed As Double
+
+  StartTime = Timer
+
+  SecondsElapsed = Round(Timer - StartTime, 2)
+
+  MsgBox "This code ran successfully in " & SecondsElapsed & " seconds", vbInformation
+
+End Sub
+
+Private Sub autofilters()
+
+With ActiveSheet.Range("A8:S8")
+.AutoFilter field:=11, Criteria1:="=0.00"
+.AutoFilter field:=19, Criteria1:="=0.00"
+End With
+
+z = Cells(Rows.Count, 1).End(xlUp).Row
+
+Range("A9:S" & z).Select
+
+Selection.EntireRow.Delete
+ActiveSheet.ShowAllData
+
+End Sub
+
+
