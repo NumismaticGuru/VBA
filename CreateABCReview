@@ -1,0 +1,244 @@
+Sub createABCReview()
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'''' Portability issues when Current inventory snap shot changes''''
+''''''''''''''' Check tab names for slight changes on WMA'''''''''''
+'''''''''''' will scale with expansion of WMA columns'''''''''''''''
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Application.ScreenUpdating = False
+
+Dim WMA As Worksheet, wbook As Workbook, SalesABC As Worksheet, SalesWB As Workbook
+Dim monthD
+Dim dt
+Dim lr As Long
+Dim addy As String
+Dim wkbname As String
+Dim myRange As String
+Dim lr7
+Dim snapshot As Worksheet
+Dim snaplr As Long
+Dim lookup As Range
+
+    monthD = Date
+    monthYear = Format(monthD, "mmmm yyyy")
+
+    ''''''''''''''''''File name and Sheet name'''''''''''''''''''''''''''''
+    Set WMA = Workbooks("WMA 5-12 Updated.xlsm").Worksheets("WMA -South")
+    lr = Cells(Rows.Count, 1).End(xlUp).Row
+
+    Set wbook = Workbooks.Add
+    ''''''''''''''''''''''''''''''''replace with current user'''''''''''''''''''''''''''''''''''''''''''
+    ActiveWorkbook.SaveAs "C:\Users\abostick\OneDrive - Power Utility Products Company\Desktop\Sales ABC Review " & monthYear & ".xls"
+        
+    Set SalesABC = Workbooks("Sales ABC Review " & monthYear & ".xls").Worksheets("Sheet1")
+    
+    
+    WMA.Range("A8:D" & lr).Copy SalesABC.Range("A1")
+    
+lr7 = lr - 7
+
+    addy = getCol("Total")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("E1:E3695").PasteSpecial Paste:=xlPasteValues
+    addy = getCol("Count")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("F1:F" & lr7).PasteSpecial Paste:=xlPasteValues
+    addy = getCol("Average")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("G1:G" & lr7).PasteSpecial Paste:=xlPasteValues
+    addy = getCol("Baseline")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("H1:H" & lr7).PasteSpecial Paste:=xlPasteValues
+    addy = getCol("Lead Time")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("I1:I" & lr7).PasteSpecial Paste:=xlPasteValues
+    addy = getCol("Reorder Point")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("J1:J" & lr7).PasteSpecial Paste:=xlPasteValues
+    addy = getCol("Preff Stock Lvl 2")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("K1:K" & lr7).PasteSpecial Paste:=xlPasteValues
+        
+     colinsert
+     
+     For j = 1 To Workbooks.Count
+        If Left(Workbooks(j).Name, 7) = "Current" Then
+            wkbname = Workbooks(j).Name
+        End If
+    Next j
+     
+    Set snapshot = Workbooks(wkbname).Worksheets("CurrentInventorySnapshot")
+
+    snaplr = snapshot.Range("A" & Rows.Count).End(xlUp).Row
+
+    Set lookup = snapshot.Range("A9:AL" & snaplr)
+
+
+    For x = 2 To lr
+        On Error Resume Next
+
+        SalesABC.Range("E" & x).Value = Application.WorksheetFunction.VLookup( _
+            SalesABC.Range("A" & x).Value, lookup, 34, 0)
+    Next x
+
+    For x = 2 To lr
+        On Error Resume Next
+        
+        SalesABC.Range("G" & x).Value = Application.WorksheetFunction.VLookup( _
+            SalesABC.Range("A" & x).Value, lookup, 35, 0)
+    Next x
+     
+    For i = 2 To lr
+        If Cells(i, 11) > 0 Then
+            Cells(i, 6) = Cells(i, 5) / Cells(i, 11)
+        Else
+            Cells(i, 6) = 0
+        End If
+    Next i
+    
+    For x = 2 To lr
+        For y = 5 To 14
+            If Cells(x, y) = 0 Or Cells(x, y) = "" Then
+                Cells(x, y) = "-"
+            Else
+                Cells(x, y) = Application.WorksheetFunction.Round(Cells(x, y), 2)
+            End If
+        Next y
+    Next x
+    
+    ActiveSheet.Name = "South"
+    SalesABC.Columns("A:N").AutoFit
+    SalesABC.Columns("A:N").AutoFilter
+    
+    Sheets.Add.Name after:=Worksheets("South")
+    ActiveSheet.Name = "North"
+    
+    Set SalesABC = Workbooks("Sales ABC Review " & monthYear & ".xls").Worksheets("North")
+    Set WMA = Workbooks("WMA 5-12 Updated.xlsm").Worksheets("WMA - North")
+    
+    WMA.Range("A8:D" & lr).Copy SalesABC.Range("A1")
+    
+lr7 = lr - 7
+
+    addy = getColN("Total")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("E1:E3695").PasteSpecial Paste:=xlPasteValues
+    addy = getColN("Count")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("F1:F" & lr7).PasteSpecial Paste:=xlPasteValues
+    addy = getColN("Average")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("G1:G" & lr7).PasteSpecial Paste:=xlPasteValues
+    addy = getColN("Baseline")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("H1:H" & lr7).PasteSpecial Paste:=xlPasteValues
+    addy = getColN("Lead Time")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("I1:I" & lr7).PasteSpecial Paste:=xlPasteValues
+    addy = getColN("Reorder Point")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("J1:J" & lr7).PasteSpecial Paste:=xlPasteValues
+    addy = getColN("Preff Stock Lvl 2")
+        myRange = addy & 8 & ":" & addy & lr
+        WMA.Range(myRange).Copy
+        SalesABC.Range("K1:K" & lr7).PasteSpecial Paste:=xlPasteValues
+        
+     colinsert
+     
+     For j = 1 To Workbooks.Count
+        If Left(Workbooks(j).Name, 7) = "Current" Then
+            wkbname = Workbooks(j).Name
+        End If
+    Next j
+     
+    Set snapshot = Workbooks(wkbname).Worksheets("CurrentInventorySnapshot")
+
+    snaplr = snapshot.Range("A" & Rows.Count).End(xlUp).Row
+
+    Set lookup = snapshot.Range("A9:AL" & snaplr)
+
+
+    For x = 2 To lr
+        On Error Resume Next
+
+        SalesABC.Range("E" & x).Value = Application.WorksheetFunction.VLookup( _
+            SalesABC.Range("A" & x).Value, lookup, 27, 0)
+    Next x
+
+    For x = 2 To lr
+        On Error Resume Next
+        
+        SalesABC.Range("G" & x).Value = Application.WorksheetFunction.VLookup( _
+            SalesABC.Range("A" & x).Value, lookup, 28, 0)
+    Next x
+     
+    For i = 2 To lr
+        If Cells(i, 11) > 0 Then
+            Cells(i, 6) = Cells(i, 5) / Cells(i, 11)
+        Else
+            Cells(i, 6) = 0
+        End If
+    Next i
+    
+    For x = 2 To lr
+        For y = 5 To 14
+            If Cells(x, y) = 0 Or Cells(x, y) = "" Then
+                Cells(x, y) = "-"
+            Else
+                Cells(x, y) = Application.WorksheetFunction.Round(Cells(x, y), 2)
+            End If
+        Next y
+    Next x
+    
+    
+    SalesABC.Columns("A:N").AutoFit
+    SalesABC.Columns("A:N").AutoFilter
+    
+    Sheets("North").Move after:=Sheets("South")
+    
+            
+Application.ScreenUpdating = True
+    
+End Sub
+Sub test()
+'test new code here
+End Sub
+
+Public Function getCol(ByVal st As String)
+For x = 1 To 500
+        If Workbooks("WMA 5-12 Updated.xlsm").Worksheets("WMA -South").Cells(8, x) = st Then
+            addy = Split(Cells(8, x).Address, "$")(1)
+        End If
+    Next x
+    getCol = addy
+End Function
+Public Function getColN(ByVal st As String)
+For x = 1 To 500
+        If Workbooks("WMA 5-12 Updated.xlsm").Worksheets("WMA - North").Cells(8, x) = st Then
+            addy = Split(Cells(8, x).Address, "$")(1)
+        End If
+    Next x
+    getColN = addy
+End Function
+Private Sub colinsert()
+Range("E:G").EntireColumn.Insert
+[E1] = "QOH"
+[F1] = "WOH"
+[G1] = "QOO"
+[N1] = "PSL"
+[L1] = "LT"
+End Sub
+
