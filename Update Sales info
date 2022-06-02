@@ -1,0 +1,236 @@
+Dim NCworksheet As Worksheet, OHworksheet As Worksheet, MIROCworksheet As Worksheet, Summaryworksheet As Worksheet, SOSummary As Worksheet
+Dim SIDsummary As Worksheet
+Dim nextrow As String, salesRepSheet As String
+Dim Count As Variant, Count1 As Variant, SOCount As Variant, SUMCount As Variant, SUMCount1 As Variant
+Dim LDate As Variant
+Dim SOWSRB As Workbook
+Sub updateSheet()
+
+''''''''''''''macro will only calculate one business day at a time'''''''''''''
+''''''''''''workbook needs to be maintained for each business day'''''''''''''''
+'''''''''''will not calculate multiple days at a time'''''''''''''''
+'''''''''''''''macro is dynamic and will scale over incosistant dates, ie, holidays/weekends'''''''
+''''''''''''''macro will take into account changes of months'''''''''''''''''
+
+
+'''This just makes the code run faster
+Application.ScreenUpdating = False
+Application.Calculation = xlManual
+Dim StartTime As Double
+Dim SecondsElapsed As Double
+    StartTime = Timer
+
+
+'''Create worksheet variables'''''
+Set NCworksheet = ActiveWorkbook.Worksheets("Summary NC")
+Set OHworksheet = ActiveWorkbook.Worksheets("Summary OH")
+Set MIROCworksheet = ActiveWorkbook.Worksheets("Summary MIROC")
+Set Summaryworksheet = ActiveWorkbook.Worksheets("Summary")
+Set SOSummary = ActiveWorkbook.Worksheets("Sales Order Data")
+Set SIDsummary = ActiveWorkbook.Worksheets("Sales Invoice data")
+
+''''''' Last row on sales order data'''''
+SOCount = SOSummary.Cells(Rows.Count, 2).End(xlUp).Row
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''Sales Order data sheet'''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    '''''''return sales order with sales rep name'''''''
+    salesRepSheet = returnSheetname
+    Debug.Print salesRepSheet
+    'Set variables from Sales orders with sales rep detail'
+    SOWSRlastrow = Workbooks(salesRepSheet).Worksheets(1).Cells(Rows.Count, 2).End(xlUp).Row
+    r = "B9:G" & SOWSRlastrow
+    
+    
+    'Set pasterange from a referenced date on SOWSR
+    q = Workbooks(salesRepSheet).Worksheets(1).Range("B9").Value 'sales rep sheet date
+    Start = getfirstPasteCol(q) 'first date on salesorderbyrep wbook
+    pasteRange = "B" & Start
+    
+            '''''''''''''Start will not match with q at the beginning of the month, nothing to paste over'''''''''''''
+        If Start <> "" Then
+            'Copy and paste
+            Workbooks(salesRepSheet).Worksheets(1).Range(r).Copy SOSummary.Range(pasteRange)
+        Else
+            Workbooks(salesRepSheet).Worksheets(1).Range(r).Copy SOSummary.Range("B" & (SOCount + 1))
+        End If
+        
+    
+    'Fill location formula down
+    hlastrow = SOSummary.Cells(Rows.Count, 8).End(xlUp).Row
+    glastrow = SOSummary.Cells(Rows.Count, 7).End(xlUp).Row
+    locrange = "H" & hlastrow & ":" & "H" & glastrow
+        
+        SOSummary.Range(locrange).FillDown
+        
+        
+''''''''''''''''''''''''''''''''''''''''''''Sales Invoice data sheet''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+        '''''''return sales order with sales rep name'''''''
+    SISheet = returnSISheetname
+    Debug.Print SISheet
+    ''''get rid of first row heading on SI sheet
+    Workbooks(SISheet).Worksheets(1).Rows(1).EntireRow.Delete
+    'Set variables from SI sheet'
+    SIlastrow = Workbooks(SISheet).Worksheets(1).Cells(Rows.Count, 1).End(xlUp).Row
+    r = "A1:S" & SIlastrow
+    
+    
+    'Set pasterange from a referenced date on SOWSR
+    q = Workbooks(SISheet).Worksheets(1).Range("A1").Value 'Sales invoice first date
+    Start = getfirstPasteColSID(q) 'first date on salesorderbyrep wbook
+    pasteRange = "B" & Start
+    
+            '''''''''''''Start will not match with q at the beginning of the month, nothing to paste over'''''''''''''
+        If Start <> "" Then
+            'Copy and paste
+            Workbooks(SISheet).Worksheets(1).Range(r).Copy SIDsummary.Range(pasteRange)
+        Else
+            Workbooks(SISheet).Worksheets(1).Range(r).Copy SIDsummary.Range("B" & (SOCount + 1))
+        End If
+        
+    
+    'Fill location formula down
+    xlastrow = SIDsummary.Cells(Rows.Count, 24).End(xlUp).Row
+    blastrow = SIDsummary.Cells(Rows.Count, 2).End(xlUp).Row
+    locrange = "X" & xlastrow & ":" & "X" & blastrow
+        
+        SIDsummary.Range(locrange).FillDown
+        
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+        
+
+
+'''''Return the last used row on location summarys'''''''''''
+Count = (NCworksheet.Cells(Rows.Count, 6).End(xlUp).Row)
+Count1 = Count + 1
+
+'''''return the last used row on the Sales order summary''''''
+SOCount = SOSummary.Cells(Rows.Count, 2).End(xlUp).Row
+
+'''''return last date on Sales order summary''''''
+LDate = SOSummary.Range("B" & SOCount).Value
+
+
+
+''''''''''''''''''Insert Row, fill formulas, update date'''''''''''''''''''''''''''''''''''''''''
+    NCworksheet.Rows(Count1).EntireRow.Insert
+
+    ''''Summary tab's last row range, used to fill formulas down'''''''
+    nextrow = "F" & Count & ":AL" & Count1
+
+    NCworksheet.Range(nextrow).FillDown
+    '''''Uses the last date on the Sales order data tab, places it on summaryNC tab'''''
+    NCworksheet.Range("H" & Count1).Value = LDate
+    'for ohio
+    OHworksheet.Rows(Count1).EntireRow.Insert
+    OHworksheet.Range(nextrow).FillDown
+    OHworksheet.Range("H" & Count1).Value = LDate
+    'for MIROC
+    MIROCworksheet.Rows(Count1).EntireRow.Insert
+    MIROCworksheet.Range(nextrow).FillDown
+    MIROCworksheet.Range("H" & Count1).Value = LDate
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'''''''''''''''Update Summary table
+    SUMCount = Summaryworksheet.Cells(Rows.Count, 10).End(xlUp).Row
+    SUMCount1 = SUMCount + 1
+    Summaryworksheet.Rows(SUMCount1).EntireRow.Insert
+    nextrow = "H" & SUMCount & ":AN" & SUMCount1
+    Summaryworksheet.Range(nextrow).FillDown
+    Summaryworksheet.Range("J" & SUMCount1) = LDate
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+
+
+Summaryworksheet.Range("B2").Value = LDate
+filltable (Count1)
+
+
+Application.ScreenUpdating = True
+Application.Calculation = xlAutomatic
+SecondsElapsed = Round(Timer - StartTime, 2)
+MsgBox "This code ran successfully in " & SecondsElapsed & " seconds", vbInformation
+
+End Sub
+Public Function returnSheetname() 'Sales order with Sales rep'
+For j = 1 To Workbooks.Count
+        If Left(Workbooks(j).Name, 7) = "SalesOr" Then
+            w = Workbooks(j).Name
+        End If
+    Next j
+    returnSheetname = w
+End Function
+Public Function returnSISheetname() 'Sales order with Sales rep'
+For j = 1 To Workbooks.Count
+        If Left(Workbooks(j).Name, 10) = "Sales (Inv" Then
+            w = Workbooks(j).Name
+        End If
+    Next j
+    returnSISheetname = w
+End Function
+Public Function getfirstPasteCol(l)
+lastrow = SOSummary.Cells(Rows.Count, 2).End(xlUp).Row
+For i = 1 To lastrow
+    If SOSummary.Cells(i, 2) = l Then
+        r = SOSummary.Cells(i, 2).Row
+        Exit For
+    End If
+Next i
+getfirstPasteCol = r
+End Function
+Public Function getfirstPasteColSID(l)
+lastrow = SIDsummary.Cells(Rows.Count, 2).End(xlUp).Row
+For i = 1 To lastrow
+    If SIDsummary.Cells(i, 2) = l Then
+        r = SIDsummary.Cells(i, 2).Row
+        Exit For
+    End If
+Next i
+getfirstPasteColSID = r
+End Function
+Private Sub filltable(c)
+'''ROW 3 Summary Tab
+Summaryworksheet.Range("C3").Value = "='Summary NC'!I" & c
+Summaryworksheet.Range("D3").Value = "='Summary NC'!L" & c
+Summaryworksheet.Range("F3").Value = "='Summary NC'!K" & c
+Summaryworksheet.Range("H3").Value = "='Summary NC'!J" & c
+'''ROW 4
+Summaryworksheet.Range("C4").Value = "='Summary OH'!I" & c
+Summaryworksheet.Range("D4").Value = "='Summary OH'!L" & c
+Summaryworksheet.Range("F4").Value = "='Summary OH'!K" & c
+Summaryworksheet.Range("H4").Value = "='Summary OH'!J" & c
+''''ROW 5
+Summaryworksheet.Range("C5").Value = "='Summary MIROC'!I" & c
+Summaryworksheet.Range("D5").Value = "='Summary MIROC'!L" & c
+Summaryworksheet.Range("F5").Value = "='Summary MIROC'!K" & c
+Summaryworksheet.Range("H5").Value = "='Summary MIROC'!J" & c
+''' ROW 7
+Summaryworksheet.Range("C7").Value = "='Summary NC'!M" & c
+Summaryworksheet.Range("D7").Value = "='Summary NC'!P" & c
+Summaryworksheet.Range("F7").Value = "='Summary NC'!O" & c
+Summaryworksheet.Range("H7").Value = "='Summary NC'!N" & c
+''' ROW 8
+Summaryworksheet.Range("C8").Value = "='Summary OH'!M" & c
+Summaryworksheet.Range("D8").Value = "='Summary OH'!P" & c
+Summaryworksheet.Range("F8").Value = "='Summary OH'!O" & c
+Summaryworksheet.Range("H8").Value = "='Summary OH'!N" & c
+''' ROW 9
+Summaryworksheet.Range("C9").Value = "='Summary MIROC'!M" & c
+Summaryworksheet.Range("D9").Value = "='Summary MIROC'!P" & c
+Summaryworksheet.Range("F9").Value = "='Summary MIROC'!O" & c
+Summaryworksheet.Range("H9").Value = "='Summary MIROC'!N" & c
+''' ROW 11
+Summaryworksheet.Range("C11").Value = "='Summary NC'!Q" & c
+Summaryworksheet.Range("D11").Value = "='Summary NC'!T" & c
+Summaryworksheet.Range("F11").Value = "='Summary NC'!S" & c
+Summaryworksheet.Range("H11").Value = "='Summary NC'!R" & c
+''' ROW 12
+Summaryworksheet.Range("C12").Value = "='Summary OH'!Q" & c
+Summaryworksheet.Range("D12").Value = "='Summary OH'!T" & c
+Summaryworksheet.Range("F12").Value = "='Summary OH'!S" & c
+Summaryworksheet.Range("H12").Value = "='Summary OH'!R" & c
+''' ROW 13
+Summaryworksheet.Range("C13").Value = "='Summary MIROC'!Q" & c
+Summaryworksheet.Range("D13").Value = "='Summary MIROC'!T" & c
+Summaryworksheet.Range("F13").Value = "='Summary MIROC'!S" & c
+Summaryworksheet.Range("H13").Value = "='Summary MIROC'!R" & c
+End Sub
