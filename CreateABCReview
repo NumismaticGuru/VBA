@@ -28,7 +28,7 @@ Dim lookup As Range
 
     Set wbook = Workbooks.Add
     ''''''''''''''''''''''''''''''''replace with current user'''''''''''''''''''''''''''''''''''''''''''
-    ActiveWorkbook.SaveAs "C:\Users\abostick\OneDrive - Power Utility Products Company\Desktop\Sales ABC Review " & monthYear & ".xls"
+    ActiveWorkbook.SaveAs "C:\Users\~~~~~~~~~~~~~~~~~\Desktop\Sales ABC Review " & monthYear & ".xls"
         
     Set SalesABC = Workbooks("Sales ABC Review " & monthYear & ".xls").Worksheets("Sheet1")
     
