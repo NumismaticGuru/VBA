@@ -1,0 +1,105 @@
+Sub transformFillRate()
+
+'''''This will download the last email attachment from an outlook folder and update the fill rate file''''''''''
+
+Dim host As Worksheet
+'''''''''''''''''''''''Need to replace with new host'''''''''''''''''''''''''
+Set host = Workbooks("Fill Rate Macro test.xlsm").Worksheets("Location")
+
+Application.ScreenUpdating = False
+Application.Calculation = xlManual
+
+'''''''find last row of the location tab''''''''''''''
+locLastRow = host.Cells(Rows.Count, 1).End(xlUp).Row
+locNextRow = locLastRow + 1
+
+''''call subroutine'''
+Call readEmail
+
+''''delete appropriate rows''''''
+x = 2
+Do While Cells(x, 3) <> ""
+    If Cells(x, 4) = "" Then
+        Rows(x).EntireRow.Delete
+        x = x - 1
+    End If
+    x = x + 1
+Loop
+
+'''''find last row on active sheet'''''''
+lastrow = Cells(Rows.Count, 1).End(xlUp).Row
+
+''''' if column 8 has a blank value, replace with a 0
+For x = 2 To lastrow
+    If Cells(x, 8) = "" Then
+        Cells(x, 8) = 0
+    End If
+Next x
+
+''''''''insert new column for the time'''''''
+Range("B2").EntireColumn.Insert
+Range("B1").Value = "Time"
+
+'''split date and time''' store time in the new column''''
+spitWithAnL
+
+'''''copy data from active, paste on the host sheet''''''
+actlr = Cells(Rows.Count, 1).End(xlUp).Row
+r = "A2:J" & actlr
+pasterange = "A" & locNextRow
+ActiveWorkbook.Worksheets(1).Range(r).Copy host.Range(pasterange)
+    
+    ''''fill down the range
+    klastrow = host.Cells(Rows.Count, 11).End(xlUp).Row
+    alastrow = host.Cells(Rows.Count, 1).End(xlUp).Row
+    locrange = "k" & klastrow & ":" & "m" & alastrow
+
+        host.Range(locrange).FillDown
+
+Application.ScreenUpdating = True
+Application.Calculation = xlCalculationAutomatic
+
+End Sub
+Public Function spitWithAnL()
+lastrow = Cells(Rows.Count, 1).End(xlUp).Row
+For x = 2 To lastrow
+    v = Cells(x, 1)
+    s = split(v, " ")
+    Cells(x, 2) = Format(s(1), "hh:mm:ss AM/PM")
+    Cells(x, 1) = s(0)
+    Cells(x, 1).NumberFormat = "m/d/yyyy"
+    
+Next x
+End Function
+Sub readEmail()
+
+'''''''download the last attachment in the fill rate folder from outlook, save on hard drive, open file'''''''
+    Dim olApp As Outlook.Application
+    Dim objNS As Outlook.Namespace
+    Dim olFolder As Outlook.MAPIFolder
+    Dim mi As Outlook.MailItem
+    Dim at As Outlook.Attachment
+    Dim p As String
+    Dim file As Object
+    
+    Set olApp = Outlook.Application
+    Set objNS = olApp.GetNamespace("MAPI")
+    Set olFolder = objNS.GetDefaultFolder(olFolderInbox)
+    Set olFolder = olFolder.Folders("Daily Fill Rate")
+    'find current user'
+    un = Environ("userprofile")
+    user = Right(un, Len(un) - 9)
+    c = olFolder.Items.Count
+    t = olFolder.Items(c).ReceivedTime
+    
+    For Each mi In olFolder.Items
+        For Each at In mi.Attachments
+            p = "C:\Users\" & user & "\OneDrive - Power Utility Products Company\Desktop\Fill Rate\" & at.Filename & " " & Format(mi.ReceivedTime, "yyyy-mm-dd") & ".xls"
+            If mi.ReceivedTime = t Then
+                at.SaveAsFile p
+                Workbooks.Open p
+            End If
+        Next at
+    Next
+
+End Sub
