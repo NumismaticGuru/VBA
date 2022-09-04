@@ -1,4 +1,6 @@
 Sub dropNrun()
+
+'''''' this code deletes the 2 highest values and 2 lowest values for each product that has a minimum of 12 times sold'''''''''''
 Application.ScreenUpdating = False
 x = 2
 y = 0
@@ -7,7 +9,7 @@ Do While Cells(x, 1) <> ""
     If Cells(x, 3) <> Cells((x - 1), 3) Then
     
         If Cells(x, 3) = Cells((x + 11), 3) Then
-        
+        ''''''''' can change 2 to remove different amounts of product sales''''''''''
             For t = 1 To 2
             
                 fpart = Cells(x, 3).Address
